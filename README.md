@@ -32,3 +32,6 @@ And include its URLs:
 
 Now, send a user to `/filemanager/` and they will be able to manage file
 uploads on the server.
+
+[Filemanager]: https://github.com/simogeo/Filemanager "Filemanager on Github"
+[c5l]: http://labs.corefive.com/2009/10/30/an-open-file-manager-for-ckeditor-3-0/
