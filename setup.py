@@ -12,7 +12,7 @@ except ImportError:
 
 setup(
     name='django-filemanager',
-    version="0.1.0",
+    version="0.2.0",
     description='A django filemanager app',
     author='Ionata Web Solutions',
     author_email='webmaster@ionata.com.au',
