@@ -5,11 +5,11 @@ import time
 import traceback
 import urllib
 
-from collections import OrderedDict
 from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.utils import simplejson
+from django.utils.datastructures import SortedDict as OrderedDict
 from django.views.decorators.csrf import csrf_exempt
 
 from os import path
