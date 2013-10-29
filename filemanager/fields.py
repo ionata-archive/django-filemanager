@@ -4,6 +4,7 @@ import json
 from django.conf import settings
 from django.core.files import File
 from django.core.urlresolvers import reverse
+from django.db.models.fields.files import FieldFile
 from django.forms.fields import CharField
 from django.forms.widgets import Input
 from django.utils.html import mark_safe, format_html
@@ -59,13 +60,15 @@ class FileBrowserWidget(Input):
         selected_id = widget_id + '__selected'
         button_id = widget_id + '__button'
 
-        if value is None:
+        if not value:
             file_link =  '<em>No file selected</em>'
         else:
             if isinstance(value, basestring):
                 file_url = value
-            else:
+            elif isinstance(value, FieldFile):
                 file_url = value.url
+            elif isinstance(value, File):
+                file_url = settings.FILEMANAGER_UPLOAD_URL + value.name
 
             file_link = format_html('<a href="{0}" target="_blank">{0}</a>',
                                     file_url)
@@ -94,6 +97,8 @@ class FileBrowserWidget(Input):
     def value_from_datadict(self, data, files, name):
         file_path = super(FileBrowserWidget, self).value_from_datadict(
             data, files, name)
+        if not file_path:
+            return None
         full_path = os.path.join(settings.FILEMANAGER_UPLOAD_ROOT, file_path)
         return File(open(full_path, 'rw+'), name=file_path)
 
@@ -112,6 +117,9 @@ class FileBrowserField(CharField):
         super(FileBrowserField, self).__init__(*args, **kwargs)
 
     def clean(self, value):
+        if value is None:
+            super(FileBrowserField, self).clean(value)
+
         file_name = value.name
         super(FileBrowserField, self).clean(file_name)
 
