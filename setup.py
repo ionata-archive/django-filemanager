@@ -10,10 +10,14 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
+with open('README.rst') as f:
+    readme = f.read()
+
 setup(
     name='django-filemanager',
     version="0.2.1",
     description='A django filemanager app',
+    long_description=readme,
     author='Ionata Web Solutions',
     author_email='webmaster@ionata.com.au',
     url='https://bitbucket.org/ionata/django-filemanager',
@@ -24,7 +28,7 @@ setup(
     packages=find_packages(),
 
     include_package_data=True,
-    package_data={ },
+    package_data={},
 
     classifiers=[
         'Environment :: Web Environment',
