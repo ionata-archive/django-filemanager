@@ -1,3 +1,5 @@
+from __future__ import unicode_literals, absolute_import
+
 import os
 import re
 import sys
@@ -13,6 +15,8 @@ from django.utils.datastructures import SortedDict as OrderedDict
 from django.views.decorators.csrf import csrf_exempt
 
 from os import path
+
+from .decorators import filemanager_require_auth
 
 
 encode_json = simplejson.JSONEncoder().encode
@@ -55,6 +59,7 @@ def filename_list(base_dir):
     dirs_first_filenames = sorted(nicely_sorted_filenames, key=isnt_dir)
 
     return dirs_first_filenames
+
 
 def natural_sort(l):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -104,7 +109,7 @@ def get_info(request, relative_info_path):
 
     imagetypes = ['.gif', '.jpg', '.jpeg', '.png']
     if os.path.isdir(info_path):
-        _, name  = split_path(info_url)
+        _, name = split_path(info_url)
         thefile = {
             'Path': info_url + "/",
             'Filename': name,
@@ -181,6 +186,7 @@ def handle_uploaded_file(request, f):
 
 
 @csrf_exempt
+@filemanager_require_auth
 def handler(request):
     if request.method == "POST":
         if request.GET.get('mode', None) == 'filetree':
@@ -196,7 +202,6 @@ def handler(request):
         if 'mode' not in request.GET:
             return render(request, 'filemanager/index.html', {
                 'UPLOAD_URL': UPLOAD_URL})
-
 
         if request.GET["mode"] == "getinfo":
             info_url = request.GET["path"]
@@ -241,7 +246,6 @@ def handler(request):
             except:
                 success_code = "500"
                 error_message = "There was an error renaming the file."
-
 
             if path.isdir(new_file):
                 old_file += '/'
