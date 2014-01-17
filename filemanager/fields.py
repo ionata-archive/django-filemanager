@@ -12,7 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 
 FILE_UPLOAD_SCRIPT_TEMPLATE = '''
 <script>
-(function(widgetId, buttonId, selectedId, mediaUrl) {{
+(function(widgetId, buttonId, selectedId, mediaUrl, uploadUrl) {{
     "use strict";
     var button = document.getElementById(buttonId);
     var widget = document.getElementById(widgetId);
@@ -22,16 +22,15 @@ FILE_UPLOAD_SCRIPT_TEMPLATE = '''
         e.preventDefault();
 
         window.SetUrl = function(path) {{
-            if (path.substring(0, mediaUrl.length) !== mediaUrl) {{
+            if (path.substring(0, uploadUrl.length) !== uploadUrl) {{
                 throw {{'message': 'Invalid file selected'}};
             }}
-            path = path.substring(mediaUrl.length);
-            widget.value = path;
+            widget.value = path.substring(mediaUrl.length);
             selected.innerHTML = '';
 
             var link = document.createElement('a');
-            link.appendChild(document.createTextNode(mediaUrl + path));
-            link.href = mediaUrl + path;
+            link.appendChild(document.createTextNode(path));
+            link.href = path;
             link.target = '_blank';
             selected.appendChild(link);
         }};
@@ -40,9 +39,10 @@ FILE_UPLOAD_SCRIPT_TEMPLATE = '''
             'height=600,width=800,resizable,scrollbars,status');
     }}, false);
 
-}})({widget_id}, {button_id}, {selected_id}, {media_url});
+}})({widget_id}, {button_id}, {selected_id}, {media_url}, {upload_url});
 </script>
 '''
+
 
 class FileBrowserWidget(Input):
 
@@ -61,14 +61,14 @@ class FileBrowserWidget(Input):
         button_id = widget_id + '__button'
 
         if not value:
-            file_link =  '<em>No file selected</em>'
+            file_link = '<em>No file selected</em>'
         else:
             if isinstance(value, basestring):
                 file_url = value
             elif isinstance(value, FieldFile):
                 file_url = value.url
             elif isinstance(value, File):
-                file_url = settings.FILEMANAGER_UPLOAD_URL + value.name
+                file_url = settings.MEDIA_URL + value.name
 
             file_link = format_html('<a href="{0}" target="_blank">{0}</a>',
                                     file_url)
@@ -86,7 +86,8 @@ class FileBrowserWidget(Input):
             widget_id=json.dumps(widget_id),
             selected_id=json.dumps(selected_id),
             button_id=json.dumps(button_id),
-            media_url=json.dumps(settings.FILEMANAGER_UPLOAD_URL))
+            media_url=json.dumps(settings.MEDIA_URL),
+            upload_url=json.dumps(settings.FILEMANAGER_UPLOAD_URL))
 
         return mark_safe('{input}{browse} {selected}{script}'.format(
             input=hidden_input,
@@ -99,7 +100,7 @@ class FileBrowserWidget(Input):
             data, files, name)
         if not file_path:
             return None
-        full_path = os.path.join(settings.FILEMANAGER_UPLOAD_ROOT, file_path)
+        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
         return File(open(full_path, 'rw+'), name=file_path)
 
 
@@ -123,14 +124,13 @@ class FileBrowserField(CharField):
         file_name = value.name
         super(FileBrowserField, self).clean(file_name)
 
-        full_path = os.path.join(settings.FILEMANAGER_UPLOAD_ROOT, file_name)
+        full_path = os.path.join(settings.MEDIA_ROOT, file_name)
 
         if self.max_length is not None and len(file_name) > self.max_length:
-            error_values =  {'max': self.max_length, 'length': len(file_name)}
+            error_values = {'max': self.max_length, 'length': len(file_name)}
             raise ValidationError(self.error_messages['max_length'] % error_values)
 
         if not os.path.exists(full_path):
             raise ValidationError(self.error_messages['invalid'])
 
         return value
-

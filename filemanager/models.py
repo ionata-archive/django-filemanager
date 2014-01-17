@@ -1,13 +1,35 @@
+import os.path
+
 from filemanager import fields
 from django.db.models import FileField
 
+from django.conf import settings
+
+MEDIA_ROOT = settings.MEDIA_ROOT
+UPLOAD_ROOT = getattr(settings, 'FILEMANAGER_UPLOAD_ROOT', MEDIA_ROOT)
+
+if not UPLOAD_ROOT.startswith(MEDIA_ROOT):
+    raise ValueError("FILEMANAGER_UPLOAD_ROOT must be below MEDIA_ROOT")
+
+UPLOAD_DIFFERENCE = UPLOAD_ROOT[len(MEDIA_ROOT)]
+
 
 class FileBrowserField(FileField):
+    def __init__(self, *args, **kwargs):
+        defaults = {
+            'upload_to': '',
+        }
+        defaults.update(kwargs)
+        defaults['upload_to'] = os.path.join(
+            UPLOAD_DIFFERENCE, defaults['upload_to'])
+        super(FileBrowserField, self).__init__(*args, **defaults)
+
     def formfield(self, **kwargs):
         defaults = {
             'form_class': fields.FileBrowserField,
         }
         defaults.update(kwargs)
+
         return super(FileBrowserField, self).formfield(**defaults)
 
     def pre_save(self, model_instance, add):
