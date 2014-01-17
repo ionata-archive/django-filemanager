@@ -15,7 +15,7 @@ with open('README.rst') as f:
 
 setup(
     name='django-filemanager',
-    version="0.3.0",
+    version="0.4.0",
     description='A django filemanager app',
     long_description=readme,
     author='Ionata Web Solutions',
