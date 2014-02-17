@@ -25,8 +25,13 @@ class FileBrowserField(FileField):
         super(FileBrowserField, self).__init__(*args, **defaults)
 
     def formfield(self, **kwargs):
+        if self.null:
+            form_class = fields.ClearableFileBrowserField
+        else:
+            form_class = fields.FileBrowserField,
+
         defaults = {
-            'form_class': fields.FileBrowserField,
+            'form_class': form_class,
         }
         defaults.update(kwargs)
 
