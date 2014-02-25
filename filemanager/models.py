@@ -28,7 +28,7 @@ class FileBrowserField(FileField):
         if self.null:
             form_class = fields.ClearableFileBrowserField
         else:
-            form_class = fields.FileBrowserField,
+            form_class = fields.FileBrowserField
 
         defaults = {
             'form_class': form_class,
