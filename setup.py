@@ -15,14 +15,14 @@ with open('README.rst') as f:
 
 setup(
     name='django-filemanager',
-    version="0.5.1",
+    version="0.5.2",
     description='A django filemanager app',
     long_description=readme,
     author='Ionata Web Solutions',
     author_email='webmaster@ionata.com.au',
     url='https://bitbucket.org/ionata/django-filemanager',
 
-    install_requires=['Django>=1.4'],
+    install_requires=['Django>=1.6'],
     zip_safe=False,
 
     packages=find_packages(),
