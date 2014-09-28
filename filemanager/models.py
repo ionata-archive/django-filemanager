@@ -11,7 +11,7 @@ UPLOAD_ROOT = getattr(settings, 'FILEMANAGER_UPLOAD_ROOT', MEDIA_ROOT)
 if not UPLOAD_ROOT.startswith(MEDIA_ROOT):
     raise ValueError("FILEMANAGER_UPLOAD_ROOT must be below MEDIA_ROOT")
 
-UPLOAD_DIFFERENCE = UPLOAD_ROOT[len(MEDIA_ROOT)]
+UPLOAD_DIFFERENCE = UPLOAD_ROOT[len(MEDIA_ROOT):]
 
 
 class FileBrowserField(FileField):

@@ -130,7 +130,7 @@ class ClearableFileBrowserWidget(FileBrowserWidget):
 
     def render(self, name, value, attrs=None):
         substitutions = {
-            'clear_label': unicode(self.clear_checkbox_label)
+            'clear_label': force_text(self.clear_checkbox_label)
         }
         substitutions['browse_widget'] = super(ClearableFileBrowserWidget, self)\
             .render(name, value, attrs)
@@ -147,9 +147,10 @@ class ClearableFileBrowserWidget(FileBrowserWidget):
     def value_from_datadict(self, data, files, name):
         upload = super(ClearableFileBrowserWidget, self).value_from_datadict(data, files, name)
         if not self.is_required and CheckboxInput().value_from_datadict(
-            data, files, self.clear_checkbox_name(name)):
+                data, files, self.clear_checkbox_name(name)):
             return None
         return upload
+
 
 class FileBrowserField(CharField):
     default_error_messages = {
@@ -182,6 +183,7 @@ class FileBrowserField(CharField):
             raise ValidationError(self.error_messages['invalid'])
 
         return value
+
 
 class ClearableFileBrowserField(FileBrowserField):
     def __init__(self, *args, **kwargs):

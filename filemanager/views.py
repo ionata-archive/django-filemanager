@@ -1,5 +1,6 @@
 from __future__ import unicode_literals, absolute_import
 
+import json
 import os
 import re
 import sys
@@ -10,7 +11,6 @@ import urllib
 from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
-from django.utils import simplejson
 from django.utils.datastructures import SortedDict as OrderedDict
 from django.views.decorators.csrf import csrf_exempt
 
@@ -19,7 +19,7 @@ from os import path
 from .decorators import filemanager_require_auth
 
 
-encode_json = simplejson.JSONEncoder().encode
+encode_json = json.dumps
 
 try:
     from PIL import Image
@@ -91,7 +91,7 @@ def filetree(request):
                 output.append('<li class="file ext_%s"><a href="#" rel="%s">%s</a></li>' % (ext, file_url, filename))
 
         output.append('</ul>')
-    except Exception, e:
+    except Exception as e:
         pass
 
     output.append('</ul>')
