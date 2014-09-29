@@ -2,6 +2,8 @@ import os
 import json
 
 from django.conf import settings
+from django.contrib.admin.widgets import AdminFileWidget
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.urlresolvers import reverse
 from django.db.models.fields.files import FieldFile
@@ -46,11 +48,22 @@ FILE_UPLOAD_SCRIPT_TEMPLATE = '''
 
 
 class FileBrowserWidget(Input):
+    clear_checkbox_label = _('Clear')
 
+    template = (
+        '<div class="filebrowser filebrowser-clearable">'
+        '{browse_widget}<br>'
+        '<label for="{clear_id}">{clear_widget} {clear_label!s}</label>'
+        '</div>'
+    )
     input_type = 'hidden'
     is_hidden = False
 
     def render(self, name, value, attrs=None):
+        substitutions = {
+            'clear_label': force_text(self.clear_checkbox_label)
+        }
+
         hidden_input = super(FileBrowserWidget, self).render(
             name, value, attrs)
 
@@ -63,6 +76,11 @@ class FileBrowserWidget(Input):
 
         if not value:
             file_link = '<em>No file selected</em>'
+            self.template = (
+                '<div class="filebrowser filebrowser-clearable">'
+                '{browse_widget}<br>'
+                '</div>'
+            )
         else:
             if isinstance(value, basestring):
                 file_url = value
@@ -90,30 +108,21 @@ class FileBrowserWidget(Input):
             media_url=json.dumps(settings.MEDIA_URL),
             upload_url=json.dumps(settings.FILEMANAGER_UPLOAD_URL))
 
-        return mark_safe('{input}{browse} {selected}{script}'.format(
-            input=hidden_input,
-            selected=selected,
-            browse=browse_button,
-            script=script))
+        substitutions['browse_widget'] = mark_safe(
+            '{input}{browse} {selected}{script}'.format(
+                input=hidden_input,
+                selected=selected,
+                browse=browse_button,
+                script=script))
 
-    def value_from_datadict(self, data, files, name):
-        file_path = super(FileBrowserWidget, self).value_from_datadict(
-            data, files, name)
-        if not file_path:
-            return None
-        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
-        return File(open(full_path, 'rw+'), name=file_path)
+        if not self.is_required:
+            checkbox_name = self.clear_checkbox_name(name)
+            checkbox_id = self.clear_checkbox_id(checkbox_name)
+            substitutions['clear_name'] = conditional_escape(checkbox_name)
+            substitutions['clear_id'] = conditional_escape(checkbox_id)
+            substitutions['clear_widget'] = CheckboxInput().render(checkbox_name, False, attrs={'id': checkbox_id})
 
-
-class ClearableFileBrowserWidget(FileBrowserWidget):
-    clear_checkbox_label = _('Clear')
-
-    template = (
-        '<div class="filebrowser filebrowser-clearable">'
-        '{browse_widget}<br>'
-        '<label for="{clear_id}">{clear_widget} {clear_label!s}</label>'
-        '</div>'
-    )
+        return mark_safe(self.template.format(**substitutions))
 
     def clear_checkbox_name(self, name):
         """
@@ -128,24 +137,13 @@ class ClearableFileBrowserWidget(FileBrowserWidget):
         """
         return name + '_id'
 
-    def render(self, name, value, attrs=None):
-        substitutions = {
-            'clear_label': force_text(self.clear_checkbox_label)
-        }
-        substitutions['browse_widget'] = super(ClearableFileBrowserWidget, self)\
-            .render(name, value, attrs)
-
-        if not self.is_required:
-            checkbox_name = self.clear_checkbox_name(name)
-            checkbox_id = self.clear_checkbox_id(checkbox_name)
-            substitutions['clear_name'] = conditional_escape(checkbox_name)
-            substitutions['clear_id'] = conditional_escape(checkbox_id)
-            substitutions['clear_widget'] = CheckboxInput().render(checkbox_name, False, attrs={'id': checkbox_id})
-
-        return mark_safe(self.template.format(**substitutions))
-
     def value_from_datadict(self, data, files, name):
-        upload = super(ClearableFileBrowserWidget, self).value_from_datadict(data, files, name)
+        file_path = super(FileBrowserWidget, self).value_from_datadict(
+            data, files, name)
+        if not file_path:
+            return None
+        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+        upload = File(open(full_path, 'rw+'), name=file_path)
         if not self.is_required and CheckboxInput().value_from_datadict(
                 data, files, self.clear_checkbox_name(name)):
             return None
@@ -160,11 +158,9 @@ class FileBrowserField(CharField):
 
     def __init__(self, *args, **kwargs):
         self.max_length = kwargs.pop('max_length', None)
-        opts = {
-            'widget': FileBrowserWidget(),
-        }
-        opts.update(kwargs)
-        super(FileBrowserField, self).__init__(*args, **opts)
+        if kwargs['widget'] == AdminFileWidget:
+            kwargs['widget'] = FileBrowserWidget
+        super(FileBrowserField, self).__init__(*args, **kwargs)
 
     def clean(self, value):
         if value is None:
@@ -183,12 +179,3 @@ class FileBrowserField(CharField):
             raise ValidationError(self.error_messages['invalid'])
 
         return value
-
-
-class ClearableFileBrowserField(FileBrowserField):
-    def __init__(self, *args, **kwargs):
-        opts = {
-            'widget': ClearableFileBrowserWidget(),
-        }
-        opts.update(kwargs)
-        super(ClearableFileBrowserField, self).__init__(*args, **opts)

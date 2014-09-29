@@ -25,17 +25,8 @@ class FileBrowserField(FileField):
         super(FileBrowserField, self).__init__(*args, **defaults)
 
     def formfield(self, **kwargs):
-        if self.null:
-            form_class = fields.ClearableFileBrowserField
-        else:
-            form_class = fields.FileBrowserField
-
-        defaults = {
-            'form_class': form_class,
-        }
-        defaults.update(kwargs)
-
-        return super(FileBrowserField, self).formfield(**defaults)
+        kwargs['form_class'] = fields.FileBrowserField
+        return super(FileBrowserField, self).formfield(**kwargs)
 
     def pre_save(self, model_instance, add):
         # Skip the pre_save of the FileField, as that tries to save the file
