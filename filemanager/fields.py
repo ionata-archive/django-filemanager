@@ -143,7 +143,7 @@ class FileBrowserWidget(Input):
         if not file_path:
             return None
         full_path = os.path.join(settings.MEDIA_ROOT, file_path)
-        upload = File(open(full_path, 'rw+'), name=file_path)
+        upload = File(open(full_path, 'r+b'), name=file_path)
         if not self.is_required and CheckboxInput().value_from_datadict(
                 data, files, self.clear_checkbox_name(name)):
             return None
