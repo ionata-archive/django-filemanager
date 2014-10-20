@@ -51,9 +51,8 @@ class FileBrowserWidget(Input):
     clear_checkbox_label = _('Clear')
 
     template = (
-        '<div class="filebrowser filebrowser-clearable">'
+        '<div class="filebrowser">'
         '{browse_widget}<br>'
-        '<label for="{clear_id}">{clear_widget} {clear_label!s}</label>'
         '</div>'
     )
     input_type = 'hidden'
@@ -76,11 +75,18 @@ class FileBrowserWidget(Input):
 
         if not value:
             file_link = '<em>No file selected</em>'
-            self.template = (
-                '<div class="filebrowser filebrowser-clearable">'
-                '{browse_widget}<br>'
-                '</div>'
-            )
+            if not self.is_required:
+                self.template = (
+                    '<div class="filebrowser filebrowser-clearable">'
+                    '{browse_widget}<br>'
+                    '</div>'
+                )
+            else:
+                self.template = (
+                    '<div class="filebrowser">'
+                    '{browse_widget}<br>'
+                    '</div>'
+                )
         else:
             if isinstance(value, basestring):
                 file_url = value
@@ -116,6 +122,12 @@ class FileBrowserWidget(Input):
                 script=script))
 
         if not self.is_required:
+            self.template = (
+                '<div class="filebrowser filebrowser-clearable">'
+                '{browse_widget}<br>'
+                '<label for="{clear_id}">{clear_widget} {clear_label!s}</label>'
+                '</div>'
+            )
             checkbox_name = self.clear_checkbox_name(name)
             checkbox_id = self.clear_checkbox_id(checkbox_name)
             substitutions['clear_name'] = conditional_escape(checkbox_name)
@@ -158,7 +170,10 @@ class FileBrowserField(CharField):
 
     def __init__(self, *args, **kwargs):
         self.max_length = kwargs.pop('max_length', None)
-        if kwargs['widget'] == AdminFileWidget:
+        if hasattr(kwargs, 'widget'):
+            if kwargs['widget'] == AdminFileWidget:
+                kwargs['widget'] = FileBrowserWidget
+        else:
             kwargs['widget'] = FileBrowserWidget
         super(FileBrowserField, self).__init__(*args, **kwargs)
 
